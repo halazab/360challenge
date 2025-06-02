@@ -32,13 +32,7 @@ class EventSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['end_datetime'] <= data['start_datetime']:
             raise serializers.ValidationError("End time must be after start time")
-        
-        if data.get('recurrence_type') != 'none':
-            if not data.get('recurrence_end_date') and not data.get('recurrence_count'):
-                raise serializers.ValidationError(
-                    "Recurring events must have either an end date or occurrence count"
-                )
-        
+
         return data
     
     def create(self, validated_data):
@@ -58,13 +52,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['end_datetime'] <= data['start_datetime']:
             raise serializers.ValidationError("End time must be after start time")
-        
-        if data.get('recurrence_type') != 'none':
-            if not data.get('recurrence_end_date') and not data.get('recurrence_count'):
-                raise serializers.ValidationError(
-                    "Recurring events must have either an end date or occurrence count"
-                )
-        
+
         return data
     
     def create(self, validated_data):
@@ -76,19 +64,13 @@ class EventUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            'title', 'description', 'start_datetime', 'end_datetime',
-            'recurrence_type', 'recurrence_interval', 'recurrence_end_date', 
+            'category', 'title', 'description', 'start_datetime', 'end_datetime',
+            'recurrence_type', 'recurrence_interval', 'recurrence_end_date',
             'recurrence_count', 'weekdays', 'monthly_pattern'
         ]
     
     def validate(self, data):
         if data['end_datetime'] <= data['start_datetime']:
             raise serializers.ValidationError("End time must be after start time")
-        
-        if data.get('recurrence_type') != 'none':
-            if not data.get('recurrence_end_date') and not data.get('recurrence_count'):
-                raise serializers.ValidationError(
-                    "Recurring events must have either an end date or occurrence count"
-                )
-        
+
         return data

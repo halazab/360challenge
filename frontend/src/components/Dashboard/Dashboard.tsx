@@ -13,10 +13,13 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
       try {
+        console.log('Fetching upcoming events...');
         const events = await eventsAPI.getUpcomingEvents(5);
+        console.log('Upcoming events received:', events);
         setUpcomingEvents(events);
       } catch (err: any) {
         console.error('Error fetching events:', err);
+        console.error('Error response:', err.response);
         setError('Failed to load upcoming events');
       } finally {
         setLoading(false);
@@ -66,14 +69,10 @@ const Dashboard: React.FC = () => {
             <h3 className="card-title">Event Statistics</h3>
           </div>
           <div className="card-body">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', textAlign: 'center' }}>
               <div>
                 <div style={{ fontSize: '2rem', fontWeight: '600', color: '#ff6b35' }}>{upcomingEvents.length}</div>
                 <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Upcoming Events</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', fontWeight: '600', color: '#28a745' }}>12</div>
-                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Total Bookings</div>
               </div>
             </div>
           </div>

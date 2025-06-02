@@ -23,9 +23,13 @@ const CalendarView: React.FC = () => {
       const startDate = startOfMonth.toISOString().split('T')[0];
       const endDate = endOfMonth.toISOString().split('T')[0];
 
+      console.log('Fetching calendar events for:', startDate, 'to', endDate);
       const eventsData = await eventsAPI.getCalendarEvents(startDate, endDate);
+      console.log('Calendar events received:', eventsData);
       setEvents(eventsData);
     } catch (err: any) {
+      console.error('Error fetching calendar events:', err);
+      console.error('Error response:', err.response);
       setError('Failed to load calendar events');
     } finally {
       setLoading(false);

@@ -28,13 +28,15 @@ A full-stack web application for creating, viewing, editing, and deleting calend
 - **Authentication**: JWT with refresh tokens
 - **Containerization**: Docker Compose for easy deployment
 
-## Quick Start
+## Setup and Installation
 
 ### Prerequisites
-- Docker and Docker Compose
+- Python 3.8+ (for backend)
+- Node.js 16+ and npm (for frontend)
+- PostgreSQL (or use Docker)
 - Git
 
-### Running the Application
+### Option 1: Docker Setup (Recommended)
 
 1. Clone the repository:
 ```bash
@@ -42,25 +44,77 @@ git clone <repository-url>
 cd 360challenge
 ```
 
-2. Start the application:
+2. Start the application with Docker:
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 
 3. Access the application:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
+- PostgreSQL: localhost:5432
 
-The application will automatically:
-- Set up the PostgreSQL database
-- Run Django migrations
-- Start both backend and frontend servers
+### Option 2: Manual Setup
+
+#### Backend Setup
+```bash
+cd backend
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Setup database (PostgreSQL)
+# Create database 'event_scheduler' in PostgreSQL
+# Update DATABASES in settings.py if needed
+
+# Run migrations
+python manage.py migrate
+
+# Create superuser (optional)
+python manage.py createsuperuser
+
+# Start development server
+python manage.py runserver
+```
+
+#### Frontend Setup
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+### Environment Variables
+
+Create `.env` files for configuration:
+
+**Backend (.env in backend/ directory):**
+```
+DEBUG=True
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=postgresql://user:password@localhost:5432/event_scheduler
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+```
+
+**Frontend (.env in frontend/ directory):**
+```
+REACT_APP_API_URL=http://localhost:8000
+```
 
 ### First Time Setup
 
-1. Create a user account by clicking "Register" on the login page
-2. Start creating events with various recurrence patterns
-3. View your events in the calendar or list view
+1. Access the frontend at http://localhost:3000
+2. Create a user account by clicking "Register"
+3. Start creating events with various recurrence patterns
+4. View your events in the calendar or list view
 
 ## User Stories Implemented
 
@@ -154,22 +208,173 @@ Comprehensive event model supporting:
 - `GET /api/events/calendar/?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` - Get calendar events
 - `GET /api/events/upcoming/?limit=N` - Get upcoming events
 
-## Technology Choices
+## Architectural Decisions
 
-### Backend: Django 5 + Django REST Framework
-- **Pros**: Mature, well-documented, excellent ORM, built-in admin
-- **Cons**: Can be heavyweight for simple APIs
-- **Why chosen**: Rapid development, excellent for complex data models, strong ecosystem
+### Backend Architecture
 
-### Frontend: React 18 + TypeScript
-- **Pros**: Component-based, large ecosystem, TypeScript for type safety
-- **Cons**: Learning curve, build complexity
-- **Why chosen**: Modern, maintainable, excellent for complex UIs
+**Django 5 + Django REST Framework**
+- **Decision**: Use Django as the backend framework
+- **Rationale**:
+  - Mature ecosystem with excellent ORM for complex data relationships
+  - Built-in admin interface for debugging and data management
+  - DRF provides robust API serialization and authentication
+  - Strong security features out of the box
+- **Trade-offs**: Slightly heavier than FastAPI, but provides more built-in functionality
 
-### Database: PostgreSQL
-- **Pros**: ACID compliance, JSON support, excellent performance
-- **Cons**: More complex than SQLite
-- **Why chosen**: Production-ready, supports complex queries, JSON fields for recurrence data
+**Database Design**
+- **Decision**: Single Event model with recurrence fields vs separate RecurrenceRule model
+- **Rationale**: Simpler queries and better performance for most use cases
+- **Implementation**: Event model contains all recurrence information as fields
+- **Trade-offs**: Some data duplication, but avoids complex joins
+
+**Recurrence Engine**
+- **Decision**: Custom Python recurrence generator vs external library (rrule)
+- **Rationale**:
+  - Full control over recurrence logic
+  - Easier to customize for specific requirements
+  - No external dependencies for core functionality
+- **Implementation**: `RecurrenceGenerator` class with pattern-specific methods
+- **Trade-offs**: More code to maintain, but better suited to requirements
+
+### Frontend Architecture
+
+**React 18 + TypeScript**
+- **Decision**: React with TypeScript vs Vue.js or Angular
+- **Rationale**:
+  - Large ecosystem and community support
+  - TypeScript provides compile-time type checking
+  - Component-based architecture fits well with event management UI
+  - Excellent tooling and development experience
+- **Trade-offs**: Steeper learning curve, but better long-term maintainability
+
+**State Management**
+- **Decision**: React Context + useState vs Redux/Zustand
+- **Rationale**:
+  - Application state is relatively simple
+  - Context API sufficient for authentication and basic state
+  - Avoids additional complexity and dependencies
+- **Trade-offs**: May need refactoring if state becomes more complex
+
+**Styling Approach**
+- **Decision**: CSS-in-JS (styled-components) vs CSS Modules vs Tailwind
+- **Rationale**:
+  - Custom CSS for full design control
+  - Consistent with existing codebase patterns
+  - No additional build dependencies
+- **Trade-offs**: More CSS to write, but better performance and control
+
+### Authentication & Security
+
+**JWT with Refresh Tokens**
+- **Decision**: JWT vs Session-based authentication
+- **Rationale**:
+  - Stateless authentication suitable for API-first architecture
+  - Refresh tokens provide security with convenience
+  - Easy to scale across multiple servers
+- **Implementation**: Access tokens (15 min) + Refresh tokens (7 days)
+- **Trade-offs**: More complex token management, but better scalability
+
+**CORS Configuration**
+- **Decision**: Explicit CORS setup vs proxy
+- **Rationale**: Clear separation between frontend and backend
+- **Implementation**: Django CORS middleware with specific origins
+- **Trade-offs**: Additional configuration, but better for production deployment
+
+### Development & Deployment
+
+**Docker Containerization**
+- **Decision**: Docker Compose for development vs native setup
+- **Rationale**:
+  - Consistent development environment across team
+  - Easy database setup with PostgreSQL
+  - Simplified deployment process
+- **Trade-offs**: Additional Docker knowledge required, but better consistency
+
+**Database Choice: PostgreSQL**
+- **Decision**: PostgreSQL vs MySQL vs SQLite
+- **Rationale**:
+  - ACID compliance for data integrity
+  - JSON field support for flexible data storage
+  - Excellent performance with complex queries
+  - Production-ready with good Django support
+- **Trade-offs**: More complex setup than SQLite, but better for production
+
+## Shortcuts and Technical Debt
+
+### Known Shortcuts
+
+1. **Error Handling**
+   - Limited error boundary implementation in React
+   - Basic error messages without detailed user guidance
+   - **Impact**: Poor user experience on errors
+   - **Future**: Implement comprehensive error boundaries and user-friendly messages
+
+2. **Testing Coverage**
+   - Limited unit tests for complex recurrence logic
+   - No integration tests for API endpoints
+   - No end-to-end tests for user workflows
+   - **Impact**: Potential bugs in production
+   - **Future**: Add comprehensive test suite with >80% coverage
+
+3. **Performance Optimization**
+   - No caching for recurring event calculations
+   - No pagination for large event lists
+   - No lazy loading for calendar views
+   - **Impact**: Slow performance with many events
+   - **Future**: Implement Redis caching and pagination
+
+4. **Security Hardening**
+   - Basic CORS configuration
+   - No rate limiting on API endpoints
+   - No input sanitization beyond Django defaults
+   - **Impact**: Potential security vulnerabilities
+   - **Future**: Add rate limiting, input validation, and security headers
+
+5. **Mobile Responsiveness**
+   - Desktop-first design with basic mobile support
+   - Calendar view not optimized for mobile
+   - **Impact**: Poor mobile user experience
+   - **Future**: Implement mobile-first responsive design
+
+6. **Data Validation**
+   - Basic form validation without advanced rules
+   - No server-side validation for complex recurrence patterns
+   - **Impact**: Potential data inconsistencies
+   - **Future**: Add comprehensive validation rules
+
+### Technical Debt
+
+1. **Code Organization**
+   - Some large components that could be split
+   - Repeated styling patterns that could be abstracted
+   - **Refactoring needed**: Extract reusable components and styles
+
+2. **API Design**
+   - Inconsistent response formats across endpoints
+   - No API versioning strategy
+   - **Refactoring needed**: Standardize API responses and add versioning
+
+3. **Configuration Management**
+   - Hardcoded configuration values in some places
+   - No environment-specific configuration files
+   - **Refactoring needed**: Centralize configuration management
+
+### Assumptions Made
+
+1. **User Behavior**
+   - Users will primarily create events for the current/future dates
+   - Most users will have < 1000 events
+   - Events are personal (no sharing/collaboration required initially)
+
+2. **Technical Constraints**
+   - Single timezone support (UTC) is sufficient initially
+   - English language only
+   - Desktop-primary usage pattern
+
+3. **Business Logic**
+   - Events can be edited/deleted without complex approval workflows
+   - No payment or booking system integration required
+   - Simple category system is sufficient for organization
 
 ## Development
 
@@ -190,15 +395,98 @@ npm install
 npm start
 ```
 
-### Running Tests
+## Running the Application
+
+### Development Mode
+
+**Backend:**
 ```bash
-# Backend tests
 cd backend
+source venv/bin/activate  # If using virtual environment
+python manage.py runserver
+# Server runs on http://localhost:8000
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm start
+# Server runs on http://localhost:3000
+```
+
+### Production Mode
+
+**Using Docker:**
+```bash
+docker-compose -f docker-compose.prod.yml up --build
+```
+
+**Manual Production Setup:**
+```bash
+# Backend
+cd backend
+pip install -r requirements.txt
+python manage.py collectstatic
+gunicorn event_scheduler.wsgi:application
+
+# Frontend
+cd frontend
+npm run build
+# Serve build/ directory with nginx or similar
+```
+
+## Testing
+
+### Backend Tests
+```bash
+cd backend
+source venv/bin/activate
+
+# Run all tests
 python manage.py test
 
-# Frontend tests
+# Run specific app tests
+python manage.py test events
+python manage.py test authentication
+
+# Run with coverage
+pip install coverage
+coverage run --source='.' manage.py test
+coverage report
+coverage html  # Generates htmlcov/ directory
+```
+
+### Frontend Tests
+```bash
 cd frontend
+
+# Run all tests
 npm test
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run specific test file
+npm test -- EventForm.test.tsx
+```
+
+### API Testing
+```bash
+# Test authentication endpoints
+curl -X POST http://localhost:8000/api/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"testpass123","first_name":"Test","last_name":"User"}'
+
+curl -X POST http://localhost:8000/api/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"testpass123"}'
+
+# Test events endpoints (requires authentication token)
+curl -X GET http://localhost:8000/api/events/ \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 ## Future Enhancements

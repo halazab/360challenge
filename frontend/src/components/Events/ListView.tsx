@@ -15,9 +15,13 @@ const ListView: React.FC = () => {
 
   const fetchEvents = async () => {
     try {
+      console.log('Fetching all events...');
       const eventsData = await eventsAPI.getEvents();
+      console.log('All events received:', eventsData);
       setEvents(eventsData);
     } catch (err: any) {
+      console.error('Error fetching all events:', err);
+      console.error('Error response:', err.response);
       setError('Failed to load events');
     } finally {
       setLoading(false);

@@ -182,7 +182,7 @@ const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({ formData, onCha
                 className="form-control"
                 style={{ width: '120px' }}
                 min="1"
-                value={formData.recurrence_count}
+                value={formData.recurrence_count || ''}
                 onChange={(e) => handleChange('recurrence_count', parseInt(e.target.value))}
               />
             </div>
