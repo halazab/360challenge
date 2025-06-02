@@ -73,10 +73,6 @@ class Event(models.Model):
         if self.end_datetime <= self.start_datetime:
             raise ValidationError("End time must be after start time")
 
-        if self.recurrence_type != 'none':
-            if not self.recurrence_end_date and not self.recurrence_count:
-                raise ValidationError("Recurring events must have either an end date or occurrence count")
-
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
